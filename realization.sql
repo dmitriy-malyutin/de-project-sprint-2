@@ -1,6 +1,4 @@
 --6.1 Создайте представление  shipping_datamart на основании готовых таблиц 
-
-
 DROP VIEW IF EXISTS shipping_datamart;
 
 CREATE VIEW shipping_datamart AS
@@ -9,14 +7,14 @@ WITH sh_cte AS (
 	FROM shipping
 )
 SELECT ss.shipping_id, si.vendor_id, st.transfer_type, 
-	date_part('day', age(ss.shipping_end_fact_datetime, ss.shipping_start_fact_datetime)) AS full_day_at_shipping,
+	EXTRACT(DAY FROM(ss.shipping_end_fact_datetime - ss.shipping_start_fact_datetime)) AS full_day_at_shipping,
 	CASE 
 		WHEN ss.shipping_end_fact_datetime  > sh.shipping_plan_datetime THEN 1 ELSE 0 
 	END AS is_delay, CASE
 		WHEN ss.status = 'finished' THEN 1 ELSE 0
 	END	AS is_shipping_finish, CASE 
 		WHEN ss.shipping_end_fact_datetime  > sh.shipping_plan_datetime 
-		THEN date_part('day', age(ss.shipping_end_fact_datetime, sh.shipping_plan_datetime))
+		THEN EXTRACT(DAY FROM(ss.shipping_end_fact_datetime - sh.shipping_plan_datetime))
 	END AS delay_day_at_shipping, si.payment_amount, 
 	(si.payment_amount * (scr.shipping_country_base_rate + sa.agreement_rate + st.shipping_transfer_rate)) AS vat,
 	(si.payment_amount * sa.agreement_comission) AS profit
@@ -25,18 +23,3 @@ FROM shipping_info si LEFT JOIN shipping_country_rates scr ON si.country_id = sc
 	LEFT JOIN shipping_transfer st ON st.id = si.transfer_id
 	LEFT JOIN shipping_status ss ON ss.shipping_id = si.shipping_id
 	LEFT JOIN sh_cte sh ON si.shipping_id = sh.shippingid;
-
---6.2 Проверим данные
-SELECT *
-FROM shipping_datamart
-ORDER BY shipping_id;
-
-SELECT shipping_id, full_day_at_shipping, is_delay, is_shipping_finish, delay_day_at_shipping, vat, profit
-FROM shipping_datamart sd
-WHERE --full_day_at_shipping IS NULL 
---is_delay  IS NULL 
---is_shipping_finish  IS NULL 
---delay_day_at_shipping  IS NULL 
---vat  IS NULL ;
-profit IS NULL;
---Выглядит ОК, представлены данные по всем уникальным shipping_id, неожиданных NULL нет.

@@ -1,6 +1,11 @@
---1.1 Создание справочника стоимости доставки в страны
+--0.1 Удалим таблицы, если существуют
 DROP TABLE IF EXISTS shipping_country_rates CASCADE;
+DROP TABLE IF EXISTS shipping_agreement CASCADE;
+DROP TABLE IF EXISTS shipping_transfer CASCADE;
+DROP TABLE IF EXISTS shipping_info CASCADE;
+DROP TABLE IF EXISTS shipping_status CASCADE;
 
+--1.1 Создание справочника стоимости доставки в страны shipping_country_rates
 CREATE TABLE shipping_country_rates
 (
 id               			serial       PRIMARY KEY,
@@ -8,10 +13,7 @@ shipping_country      		TEXT,
 shipping_country_base_rate  numeric(14,2)
 );
 
---2.1 Создание справочника тарифов доставки вендора по договору
-DROP TABLE IF EXISTS shipping_agreement CASCADE;
-
-
+--2.1 Создание справочника тарифов доставки вендора по договору shipping_agreement
 CREATE TABLE shipping_agreement 
 (
 agreement_id 		BIGINT 			PRIMARY KEY,
@@ -21,8 +23,6 @@ agreement_comission NUMERIC
 );
 
 --3.1 Создание справочника о типах доставки shipping_transfer
-DROP TABLE IF EXISTS shipping_transfer;
-
 CREATE TABLE shipping_transfer
 (
 id 						serial 			PRIMARY KEY,
@@ -31,9 +31,7 @@ transfer_model 			TEXT,
 shipping_transfer_rate 	NUMERIC(4, 3) 
 );
 
---4.1 Создание справочника комиссий по странам с уникальными доставками
-DROP TABLE IF EXISTS shipping_info CASCADE;
-
+--4.1 Создание справочника комиссий по странам с уникальными доставками shipping_info
 CREATE TABLE shipping_info
 (
 shipping_id 			BIGINT 		PRIMARY KEY,
@@ -49,16 +47,12 @@ FOREIGN KEY (transfer_id) REFERENCES shipping_transfer(id) ON UPDATE CASCADE
 );
 
 --5.1 Создание таблицы статусов о доставке shipping_status
-DROP TABLE IF EXISTS shipping_status;
-
 CREATE TABLE shipping_status
 (
 shipping_id 					BIGINT PRIMARY KEY,
 status 							TEXT,
 state 							TEXT,
 shipping_start_fact_datetime 	TIMESTAMP,
-shipping_end_fact_datetime 		TIMESTAMP NULL
+shipping_end_fact_datetime 		TIMESTAMP NULL,
+FOREIGN KEY (shipping_id) REFERENCES shipping_info(shipping_id) ON UPDATE CASCADE
 );
-
---Дополним БД связями
-ALTER TABLE  shipping_info ADD CONSTRAINT shipping_id_fk FOREIGN KEY (shipping_id) REFERENCES shipping_status(shipping_id) ON UPDATE CASCADE;
